@@ -1,3 +1,4 @@
+aws_lambda_powertools
 boto3
 fastjsonschema
-aws_lambda_powertools
+injector

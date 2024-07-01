@@ -25,7 +25,6 @@ docker compose up -d --build
 外部ライブラリを import する場合は {APP_NAME} 配下のrequirements.txt にライブラリ名を記載し、以下を実行
 
 ```
-docker compose exec app pip install -r requirements.txt
 docker compose up -d --force-recreate
 ```
 
@@ -44,7 +43,7 @@ curl http://127.0.0.1:80
 {APP_NAME}/tests に テストファイルを作成 [[参考](https://aws.github.io/chalice/topics/testing.html)] し、以下を実行。
 
 ```
-docker compose exec app pytest tests
+docker compose exec app pytest -s tests
 ```
 
 ## デプロイ

@@ -1,3 +1,6 @@
+from injector import singleton
+
+@singleton
 class ProductRepository:
     def __init__(self, dynamodb=None):
         # self.dynamodb = dynamodb or boto3.resource('dynamodb')

@@ -1,12 +1,15 @@
 from aws_lambda_powertools.utilities.validation import validate
 from chalice import Response
+from injector import inject
 from chalicelib.repositories.product_repository import ProductRepository
 from chalicelib.schemas import create_product_schema
 
 
 class ProductService:
-    def __init__(self):
-        self.product_repository = ProductRepository()
+
+    @inject
+    def __init__(self, product_repository: ProductRepository):
+        self.product_repository = product_repository
 
     def get_products(self):
         return self.product_repository.get_products()

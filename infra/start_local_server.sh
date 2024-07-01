@@ -5,6 +5,8 @@ cd /app
 if [ -z "$(ls -A $APP_NAME)" ]; then
   rm -rf $APP_NAME
   chalice new-project $APP_NAME
+  mkdir $APP_NAME/tests
+  touch $APP_NAME/tests/__init__.py
   chmod -R 777 $APP_NAME
 fi
 
