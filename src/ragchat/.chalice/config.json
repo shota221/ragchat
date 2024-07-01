@@ -1,10 +1,12 @@
 {
   "version": "2.0",
-  "app_name": "sample-app",
+  "app_name": "ragchat",
   "stages": {
     "local" : {
       "environment_variables": {
-        "LOG_LEVEL": "DEBUG"
+        "LOG_LEVEL": "DEBUG",
+        "KENDRA_INDEX_ID": "f8a5e681-682d-48a1-981e-93462a816520",
+        "KENDRA_DATA_SOURCE_ID": "08e31a6f-132c-4e75-8edb-95c73f8cb5c2"
       }
     },
     "dev": {
