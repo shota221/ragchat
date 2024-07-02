@@ -2,8 +2,8 @@ import json
 import os
 from dataclasses import asdict
 import boto3
-from chalicelib.responses.confirm_search_engine_sync_job_response import (
-    ConfirmSearchEngineSyncJobResponse,
+from chalicelib.dataclasses.confirm_search_engine_sync_job_result import (
+    ConfirmSearchEngineSyncJobResult,
 )
 from chalicelib.enums.confirm_search_engine_sync_job_status import (
     ConfirmSearchEngineSyncJobStatus,
@@ -26,14 +26,14 @@ class SearchEngineService:
     def confirm_sync_job(self):
         if self.__is_syncing():
             return asdict(
-                ConfirmSearchEngineSyncJobResponse(
+                ConfirmSearchEngineSyncJobResult(
                     status=ConfirmSearchEngineSyncJobStatus.IN_PROGRESS.value
                 )
             )
 
         if self.__is_completed_nomally():
             return asdict(
-                ConfirmSearchEngineSyncJobResponse(
+                ConfirmSearchEngineSyncJobResult(
                     status=ConfirmSearchEngineSyncJobStatus.COMPLETED.value
                 )
             )
@@ -41,7 +41,7 @@ class SearchEngineService:
         self.request_sync_job()
 
         return asdict(
-            ConfirmSearchEngineSyncJobResponse(
+            ConfirmSearchEngineSyncJobResult(
                 status=ConfirmSearchEngineSyncJobStatus.IN_PROGRESS.value
             )
         )
