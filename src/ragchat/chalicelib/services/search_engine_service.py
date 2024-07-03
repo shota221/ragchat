@@ -1,83 +1,75 @@
-import json
 import os
-from dataclasses import asdict
 import boto3
+from injector import inject, Injector
+from chalicelib.helper import result_handler
 from chalicelib.dataclasses.confirm_search_engine_sync_job_result import (
     ConfirmSearchEngineSyncJobResult,
 )
 from chalicelib.enums.confirm_search_engine_sync_job_status import (
     ConfirmSearchEngineSyncJobStatus,
 )
+from chalicelib.clients.search_engine_client import (
+    SearchEngineClient,
+    DataSourceSyncJobListCondition,
+)
 
 
 class SearchEngineService:
-    def __init__(self):
-        self.client = boto3.client("kendra")
-        self.index_id = os.environ.get("KENDRA_INDEX_ID")
-        self.data_source_id = os.environ.get("KENDRA_DATA_SOURCE_ID")
+    @inject
+    def __init__(self, search_engine_client: SearchEngineClient):
+        self.search_engine_client = search_engine_client
 
+    @result_handler
     def request_sync_job(self):
-        response = self.client.start_data_source_sync_job(
-            Id=self.data_source_id, IndexId=self.index_id
-        )
+        result = self.search_engine_client.start_data_source_sync_job()
 
-        return response
+        return result
 
+    @result_handler
     def confirm_sync_job(self):
         if self.__is_syncing():
-            return asdict(
-                ConfirmSearchEngineSyncJobResult(
+            return ConfirmSearchEngineSyncJobResult(
                     status=ConfirmSearchEngineSyncJobStatus.IN_PROGRESS.value
                 )
-            )
 
         if self.__is_completed_nomally():
-            return asdict(
-                ConfirmSearchEngineSyncJobResult(
+            return ConfirmSearchEngineSyncJobResult(
                     status=ConfirmSearchEngineSyncJobStatus.COMPLETED.value
                 )
-            )
 
         self.request_sync_job()
 
-        return asdict(
-            ConfirmSearchEngineSyncJobResult(
+        return ConfirmSearchEngineSyncJobResult(
                 status=ConfirmSearchEngineSyncJobStatus.IN_PROGRESS.value
             )
-        )
 
     def __is_syncing(self):
-        syncing_list = self.client.list_data_source_sync_jobs(
-            Id=self.data_source_id, IndexId=self.index_id, StatusFilter="SYNCING"
+        syncing_list = self.search_engine_client.list_data_source_sync_jobs(
+            DataSourceSyncJobListCondition(status="SYNCING")
         )
 
-        if syncing_list.get("History", []):
+        if syncing_list:
             return True
 
-        indexing_list = self.client.list_data_source_sync_jobs(
-            Id=self.data_source_id,
-            IndexId=self.index_id,
-            StatusFilter="SYNCING_INDEXING",
+        indexing_list = self.search_engine_client.list_data_source_sync_jobs(
+            DataSourceSyncJobListCondition(status="SYNCING_INDEXING")
         )
 
-        if indexing_list.get("History", []):
+        if indexing_list:
             return True
 
         return False
 
     def __is_completed_nomally(self):
-        latest_success_list = self.client.list_data_source_sync_jobs(
-            Id=self.data_source_id,
-            IndexId=self.index_id,
-            MaxResults=2,
-            StatusFilter="SUCCEEDED",
+        latest_success_list = self.search_engine_client.list_data_source_sync_jobs(
+            DataSourceSyncJobListCondition(status="SUCCEEDED", max_results=2)
         )
 
-        if len(latest_success_list.get("History", [])) < 2:
+        if len(latest_success_list) < 2:
             print("Latest success list is less than 2")
             return False
 
-        latest_job_summary = latest_success_list.get("History", [])[0]
+        latest_job_summary = latest_success_list[0]
 
         latest_scanned_count = int(
             latest_job_summary.get("Metrics", {}).get("DocumentsScanned")
@@ -94,7 +86,7 @@ class SearchEngineService:
         if latest_deleted_count == 0:
             return True
 
-        second_latest_success_job_summary = latest_success_list.get("History", [])[1]
+        second_latest_success_job_summary = latest_success_list[1]
 
         second_latest_scanned_count = int(
             second_latest_success_job_summary.get("Metrics", {}).get("DocumentsScanned")
