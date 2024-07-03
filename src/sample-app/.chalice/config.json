@@ -4,7 +4,7 @@
   "stages": {
     "local" : {
       "environment_variables": {
-        "LOG_LEVEL": "INFO"
+        "LOG_LEVEL": "DEBUG"
       }
     },
     "dev": {
