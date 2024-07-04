@@ -11,9 +11,13 @@
 			"Resource": "arn:*:logs:*:*:*"
 		},
         {
-			"Sid": "VisualEditor0",
 			"Effect": "Allow",
 			"Action": "kendra:*",
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": "bedrock:*",
 			"Resource": "*"
 		}
 	]

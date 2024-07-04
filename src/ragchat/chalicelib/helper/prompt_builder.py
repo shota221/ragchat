@@ -8,7 +8,7 @@ class PromptBuilder:
         self.config = config
 
     def build(
-        self, inquiry: str, informations: List[InformationFragment], section: str = "v1"
+        self, inquiry: str, informations: List[InformationFragment], section: str = "DEFAULT"
     ) -> str:
         config = self.config[section]
 
@@ -33,6 +33,9 @@ class PromptBuilder:
                 + "）\n"
             )
 
+        if not information_prompts:
+            information_prompts = "情報: なし"
+            
         prompt = f"""
 
     {preface}
