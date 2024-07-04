@@ -1,4 +1,5 @@
 import configparser
+import os
 import json
 from configparser import ConfigParser
 import boto3
@@ -29,12 +30,18 @@ class InquiryService:
         validate(event=json_body, schema=send_inquiry_schema.INPUT)
 
         config = ConfigParser()
-        config.read("prompt.ini", encoding='utf-8')
+        dir = os.path.dirname(os.path.abspath(__file__))
+        filepath = os.path.join(dir, 'prompt.ini')
+        config.read(filepath, encoding='utf-8')
 
         prompt_builder = PromptBuilder(config)
 
+        query_text = json_body["userText"]  
+        source_uris = json_body.get("conditions", {}).get("sourceUris", [])
+        categories = json_body.get("conditions", {}).get("categories", [])
+
         information_fragments = self.search_engine_client.search(
-            SearchCondition(query_text=json_body["userText"])
+            SearchCondition(query_text=query_text, source_uris=source_uris, categories=categories)
         )
 
         prompt = prompt_builder.build(

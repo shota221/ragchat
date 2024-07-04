@@ -18,7 +18,9 @@
       "environment_variables": {
         "LOG_LEVEL": "DEBUG",
         "KENDRA_INDEX_ID": "f8a5e681-682d-48a1-981e-93462a816520",
-        "KENDRA_DATA_SOURCE_ID": "08e31a6f-132c-4e75-8edb-95c73f8cb5c2"
+        "KENDRA_DATA_SOURCE_ID": "08e31a6f-132c-4e75-8edb-95c73f8cb5c2",
+        "BEDROCK_REGION": "us-east-1",
+        "BEDROCK_MODEL_ID": "anthropic.claude-3-5-sonnet-20240620-v1:0"
       }
     },
     "stg": {
@@ -28,7 +30,9 @@
       "environment_variables": {
         "LOG_LEVEL": "INFO",
         "KENDRA_INDEX_ID": "6fd429b3-ae2f-4fea-8b82-b6eee77064b7",
-        "KENDRA_DATA_SOURCE_ID": "bbeb9e94-28d2-4efa-972d-f6dea09b8ae3"
+        "KENDRA_DATA_SOURCE_ID": "bbeb9e94-28d2-4efa-972d-f6dea09b8ae3",
+        "BEDROCK_REGION": "us-east-1",
+        "BEDROCK_MODEL_ID": "anthropic.claude-3-5-sonnet-20240620-v1:0"
       }
     },
     "prod": {
