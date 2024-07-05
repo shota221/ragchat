@@ -84,3 +84,4 @@ class SearchEngineClient:
             )
             for highlight in response.get("ResultItems", [])
         ]
+    

@@ -1,7 +1,8 @@
 import os
+from datetime import datetime
 import boto3
 from injector import inject, Injector
-from chalicelib.helper import result_handler
+from chalicelib.helper import result_handler, utc2jst
 from chalicelib.dataclasses.confirm_search_engine_sync_job_result import (
     ConfirmSearchEngineSyncJobResult,
 )
@@ -22,7 +23,6 @@ class SearchEngineService:
     @result_handler
     def request_sync_job(self):
         result = self.search_engine_client.start_data_source_sync_job()
-
         return result
 
     @result_handler
@@ -32,9 +32,13 @@ class SearchEngineService:
                     status=ConfirmSearchEngineSyncJobStatus.IN_PROGRESS.value
                 )
 
-        if self.__is_completed_nomally():
+        end_time = self.__get_nomally_completed_time()
+        if end_time:
+            utc_time=end_time.strftime('%Y-%m-%d %H:%M:%S')
+            jst_time=utc2jst(utc_time)
             return ConfirmSearchEngineSyncJobResult(
-                    status=ConfirmSearchEngineSyncJobStatus.COMPLETED.value
+                    status=ConfirmSearchEngineSyncJobStatus.COMPLETED.value,
+                    end_time=jst_time
                 )
 
         self.request_sync_job()
@@ -60,14 +64,14 @@ class SearchEngineService:
 
         return False
 
-    def __is_completed_nomally(self):
+    def __get_nomally_completed_time(self):
         latest_success_list = self.search_engine_client.list_data_source_sync_jobs(
             DataSourceSyncJobListCondition(status="SUCCEEDED", max_results=2)
         )
 
         if len(latest_success_list) < 2:
             print("Latest success list is less than 2")
-            return False
+            return None
 
         latest_job_summary = latest_success_list[0]
 
@@ -84,7 +88,7 @@ class SearchEngineService:
         )
 
         if latest_deleted_count == 0:
-            return True
+            return latest_job_summary.get("EndTime")
 
         second_latest_success_job_summary = latest_success_list[1]
 
@@ -98,6 +102,6 @@ class SearchEngineService:
 
         if latest_scanned_count != expected_latest_scanned_count:
             print("Scanned count is not expected")
-            return False
+            return None
 
-        return True
+        return latest_job_summary.get("EndTime")
