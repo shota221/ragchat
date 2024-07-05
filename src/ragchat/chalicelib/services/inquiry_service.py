@@ -12,6 +12,7 @@ from chalicelib.clients.search_engine_client import (
     SearchCondition,
     DataSourceSyncJobListCondition,
 )
+from chalicelib.dataclasses.send_inquiry_result import SendInquiryResult
 from chalicelib.schemas import send_inquiry_schema
 
 
@@ -36,8 +37,8 @@ class InquiryService:
 
         prompt_builder = PromptBuilder(config)
 
-        query_text = json_body["userText"]  
-        source_uris = json_body.get("conditions", {}).get("sourceUris", [])
+        query_text = json_body["user_text"]  
+        source_uris = json_body.get("conditions", {}).get("source_uris", [])
         categories = json_body.get("conditions", {}).get("categories", [])
 
         information_fragments = self.search_engine_client.search(
@@ -45,9 +46,11 @@ class InquiryService:
         )
 
         prompt = prompt_builder.build(
-            inquiry=json_body["userText"],
+            inquiry=json_body["user_text"],
             informations=information_fragments,
         )
 
-        response = self.generation_ai_client.generate_message(prompt)
-        return response
+        assistant_text = self.generation_ai_client.generate_message(prompt)
+
+        return SendInquiryResult(text=assistant_text)
+    

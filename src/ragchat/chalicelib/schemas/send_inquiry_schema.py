@@ -1,13 +1,13 @@
 INPUT = {
     "$schema": "http://json-schema.org/draft-07/schema",
     "type": "object",
-    "required": ["userText"],
+    "required": ["user_text"],
     "properties": {
-        "userText": {"type": "string"},
+        "user_text": {"type": "string"},
         "conditions": {
             "type": "object",
             "properties": {
-                "sourceUris": {"type": "array"},
+                "source_uris": {"type": "array"},
                 "categories": {"type": "array"},
             },
         }
