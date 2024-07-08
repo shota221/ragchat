@@ -7,9 +7,9 @@ INPUT = {
         "conditions": {
             "type": "object",
             "properties": {
-                "source_uris": {"type": "array"},
-                "categories": {"type": "array"},
+                "source_uris": {"type": "array", "maxItems": 10, "items": {"type": "string"}},
+                "category_ids": {"type": "array", "maxItems": 10}
             },
-        }
+        },
     },
 }

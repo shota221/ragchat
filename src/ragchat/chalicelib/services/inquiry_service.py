@@ -39,10 +39,10 @@ class InquiryService:
 
         query_text = json_body["user_text"]  
         source_uris = json_body.get("conditions", {}).get("source_uris", [])
-        categories = json_body.get("conditions", {}).get("categories", [])
+        category_ids = json_body.get("conditions", {}).get("category_ids", [])
 
         information_fragments = self.search_engine_client.search(
-            SearchCondition(query_text=query_text, source_uris=source_uris, categories=categories)
+            SearchCondition(query_text=query_text, source_uris=source_uris, category_ids=[str(v) for v in category_ids])
         )
 
         prompt = prompt_builder.build(
