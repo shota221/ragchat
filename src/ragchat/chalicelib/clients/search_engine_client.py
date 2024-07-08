@@ -17,7 +17,7 @@ class DataSourceSyncJobListCondition:
 class SearchCondition:
     query_text: str
     source_uris: List[str] = None
-    categories: List[str] = None
+    category_ids: List[str] = None
     page_size: int = 10
 
 @singleton
@@ -48,13 +48,20 @@ class SearchEngineClient:
     def search(self, condition: SearchCondition):
         or_all_filters = []
         if condition.source_uris:
-            for source_uri in condition.source_uris:
-                or_all_filters.append({
-                    "EqualsTo": {
-                        "Key": "_source_uri",
-                        "Value": {"StringValue": source_uri},
-                    }
-                })
+            or_all_filters.append({
+                "ContainsAny": {
+                    "Key": "source_uris",
+                    "Value": {"StringListValue": condition.source_uris},
+                }
+            })
+
+        if condition.category_ids:
+            or_all_filters.append({
+                "ContainsAny": {
+                    "Key": "category_ids",
+                    "Value": {"StringListValue": condition.category_ids},
+                }
+            })
 
         attribute_filter = {
             "AndAllFilters": [
@@ -76,6 +83,8 @@ class SearchEngineClient:
             AttributeFilter=attribute_filter,
             PageSize=condition.page_size,
         )
+
+        print(response)
 
         return [
             InformationFragment(

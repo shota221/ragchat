@@ -3,6 +3,7 @@ from logging import getLogger, getLevelName
 from injector import Injector
 from chalicelib.services.search_engine_service import SearchEngineService
 from chalicelib.services.inquiry_service import InquiryService
+from chalicelib.services.file_attr_service import FileAttrService
 from chalice import Chalice
 from chalice import Response
 
@@ -29,3 +30,11 @@ def confirm_search_engine_sync_job():
 @app.route("/inquiries", methods=["POST"])
 def send_inquiry():
     return injector.get(InquiryService).send(app.current_request.json_body)
+
+@app.route("/file_attrs", methods=["PUT"])
+def update_file_attr():
+    return injector.get(FileAttrService).update(app.current_request.json_body)
+
+@app.route("/file_attrs/init", methods=["POST"])
+def init_file_attr():
+    return injector.get(FileAttrService).init()
