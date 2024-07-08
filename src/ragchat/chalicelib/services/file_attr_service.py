@@ -20,6 +20,13 @@ class FileAttrService:
         + os.environ["S3_BUCKET_NAME"]
         + "/"
     )
+    HTTP_FILE_URI_PREFIX_2 = (
+        "https://"
+        + os.environ["S3_BUCKET_NAME"]
+        + ".s3."
+        + os.environ["AWS_DEFAULT_REGION"]
+        + ".amazonaws.com/"
+    )
     S3_FILE_URI_PREFIX = "s3://" + os.environ["S3_BUCKET_NAME"] + "/"
 
     @inject
@@ -45,6 +52,10 @@ class FileAttrService:
             http_encoded_file_uri = self.HTTP_FILE_URI_PREFIX + urllib.parse.quote(
                 target_key
             )
+            http_file_uri_2 = self.HTTP_FILE_URI_PREFIX_2 + target_key
+            http_encoded_file_uri_2 = self.HTTP_FILE_URI_PREFIX_2 + urllib.parse.quote(
+                target_key
+            )
             s3_file_uri = self.S3_FILE_URI_PREFIX + target_key
             s3_encoded_file_uri = self.S3_FILE_URI_PREFIX + urllib.parse.quote(
                 target_key
@@ -54,6 +65,8 @@ class FileAttrService:
                     "source_uris": [
                         http_file_uri,
                         http_encoded_file_uri,
+                        http_file_uri_2,
+                        http_encoded_file_uri_2,
                         s3_file_uri,
                         s3_encoded_file_uri,
                     ]
@@ -83,23 +96,37 @@ class FileAttrService:
             http_encoded_file_uri = self.HTTP_FILE_URI_PREFIX + urllib.parse.quote(
                 target_key
             )
+            http_file_uri_2 = self.HTTP_FILE_URI_PREFIX_2 + target_key
+            http_encoded_file_uri_2 = self.HTTP_FILE_URI_PREFIX_2 + urllib.parse.quote(
+                target_key
+            )
             s3_file_uri = self.S3_FILE_URI_PREFIX + target_key
             s3_encoded_file_uri = self.S3_FILE_URI_PREFIX + urllib.parse.quote(
                 target_key
             )
             if self.storage_client.exists(meta_file_key):
-
-                continue
-            meta = {
-                "Attributes": {
-                    "source_uris": [
-                        http_file_uri,
-                        http_encoded_file_uri,
-                        s3_file_uri,
-                        s3_encoded_file_uri,
-                    ]
+                meta = self.storage_client.get_json_object(meta_file_key)
+                meta["Attributes"]["source_uris"] = [
+                    http_file_uri,
+                    http_encoded_file_uri,
+                    http_file_uri_2,
+                    http_encoded_file_uri_2,
+                    s3_file_uri,
+                    s3_encoded_file_uri,
+                ]
+            else:
+                meta = {
+                    "Attributes": {
+                        "source_uris": [
+                            http_file_uri,
+                            http_encoded_file_uri,
+                            http_file_uri_2,
+                            http_encoded_file_uri_2,
+                            s3_file_uri,
+                            s3_encoded_file_uri,
+                        ]
+                    }
                 }
-            }
             self.storage_client.put_object(
                 meta_file_key, json.dumps(meta, ensure_ascii=False)
             )
