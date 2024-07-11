@@ -37,6 +37,7 @@
         "KENDRA_DATA_SOURCE_ID": "bbeb9e94-28d2-4efa-972d-f6dea09b8ae3",
         "BEDROCK_REGION": "us-east-1",
         "BEDROCK_MODEL_ID": "anthropic.claude-3-5-sonnet-20240620-v1:0",
+        "BEDROCK_EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
         "S3_BUCKET_NAME": "raglab-source-bucket"
       }
     },
