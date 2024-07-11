@@ -31,6 +31,10 @@ def confirm_search_engine_sync_job():
 def send_inquiry():
     return injector.get(InquiryService).send(app.current_request.json_body)
 
+@app.route("/inquiries/embedding", methods=["POST"])
+def generate_embedding():
+    return injector.get(InquiryService).generate_embedding(app.current_request.json_body)
+
 @app.route("/file_attrs", methods=["PUT"])
 def update_file_attr():
     return injector.get(FileAttrService).update(app.current_request.json_body)

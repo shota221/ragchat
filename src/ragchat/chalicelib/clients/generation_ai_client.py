@@ -10,6 +10,7 @@ from injector import singleton
 class GenerationAiClient:
     def __init__(self):
         self.bedrock_model_id = os.environ.get("BEDROCK_MODEL_ID")
+        self.embedding_model_id = os.environ.get("BEDROCK_EMBEDDING_MODEL_ID")
         bedrock_config = Config(
             region_name=os.environ.get("BEDROCK_REGION"),
         )
@@ -36,3 +37,23 @@ class GenerationAiClient:
         response_body = json.loads(response["body"].read().decode("utf-8"))
 
         return response_body["content"][0]["text"]
+
+    def generate_embedding(self, text):
+        body = json.dumps(
+            {
+                "inputText": text,
+            }
+        ).encode("utf-8")
+
+        response = self.client.invoke_model(
+            modelId=self.embedding_model_id,
+            accept="*/*",
+            contentType="application/json",
+            body=body,
+        )
+
+        response_body = json.loads(response.get("body").read())
+
+        embedding = response_body.get("embedding")
+
+        return embedding
