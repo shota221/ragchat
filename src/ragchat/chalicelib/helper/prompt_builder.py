@@ -45,7 +45,7 @@ class PromptBuilder:
 
     {information_prompts}
 
-    質問:「{inquiry}」 """
+    問い合わせ:「{inquiry}」 """
         
         print(prompt)
 

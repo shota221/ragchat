@@ -13,7 +13,8 @@ from chalicelib.clients.search_engine_client import (
     DataSourceSyncJobListCondition,
 )
 from chalicelib.dataclasses.send_inquiry_result import SendInquiryResult
-from chalicelib.schemas import send_inquiry_schema
+from chalicelib.dataclasses.generate_embedding_result import GenerateEmbeddingResult
+from chalicelib.schemas import send_inquiry_schema, generate_embedding_schema
 
 
 class InquiryService:
@@ -52,5 +53,14 @@ class InquiryService:
 
         assistant_text = self.generation_ai_client.generate_message(prompt)
 
-        return SendInquiryResult(text=assistant_text)
+        user_text_embedding = self.generation_ai_client.generate_embedding(query_text)
+
+        return SendInquiryResult(assistant_text=assistant_text, vectors={"user_text": user_text_embedding})
     
+    @result_handler
+    def generate_embedding(self, json_body):
+        validate(event=json_body, schema=generate_embedding_schema.INPUT)
+
+        embedding = self.generation_ai_client.generate_embedding(json_body["text"])
+
+        return GenerateEmbeddingResult(vector=embedding)

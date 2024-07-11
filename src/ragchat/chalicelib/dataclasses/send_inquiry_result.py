@@ -3,4 +3,5 @@ from dataclasses import dataclass
 
 @dataclass
 class SendInquiryResult:
-    text: str
+    assistant_text: str
+    vectors: dict
