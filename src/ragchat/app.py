@@ -18,7 +18,6 @@ injector = Injector()
 # routes definition  #
 ######################
 
-# todo: error handling
 @app.route("/search-engine/sync-job/request", methods=["POST"])
 def request_search_engine_sync_job():
     return injector.get(SearchEngineService).request_sync_job()
@@ -42,3 +41,15 @@ def update_file_attr():
 @app.route("/file_attrs/init", methods=["POST"])
 def init_file_attr():
     return injector.get(FileAttrService).init()
+
+
+######################
+# event handlers     #
+######################
+
+@app.on_s3_event(bucket=environ["S3_BUCKET_NAME"], events=["s3:ObjectRemoved:Delete"])
+def on_s3_object_removed(event):
+    # オブジェクトキーを取得
+    logger.info(f"on_s3_object_removed: {event.key}")
+    injector.get(FileAttrService).remove(event.key)
+
