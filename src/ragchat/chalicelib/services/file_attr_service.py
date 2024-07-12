@@ -37,52 +37,60 @@ class FileAttrService:
     def update(self, json_body):
         validate(event=json_body, schema=update_file_attr_schema.INPUT)
 
-        target_key = json_body["file_name"]
+        for item in json_body:
+            target_key = item["file_name"]
 
-        if not self.storage_client.exists(target_key):
-            raise Exception(f"File not found: {target_key}")
+            if not self.storage_client.exists(target_key):
+                raise Exception(f"File not found: {target_key}")
 
-        meta_file_key = self.META_FILE_PREFIX + target_key + self.META_FILE_SUFFIX
-        attributes = json_body["attributes"]
+        results = []
 
-        if self.storage_client.exists(meta_file_key):
-            meta = self.storage_client.get_json_object(meta_file_key)
-        else:
-            http_file_uri = self.HTTP_FILE_URI_PREFIX + target_key
-            http_encoded_file_uri = self.HTTP_FILE_URI_PREFIX + urllib.parse.quote(
-                target_key
-            )
-            http_file_uri_2 = self.HTTP_FILE_URI_PREFIX_2 + target_key
-            http_encoded_file_uri_2 = self.HTTP_FILE_URI_PREFIX_2 + urllib.parse.quote(
-                target_key
-            )
-            s3_file_uri = self.S3_FILE_URI_PREFIX + target_key
-            s3_encoded_file_uri = self.S3_FILE_URI_PREFIX + urllib.parse.quote(
-                target_key
-            )
-            meta = {
-                "Attributes": {
-                    "source_uris": [
-                        http_file_uri,
-                        http_encoded_file_uri,
-                        http_file_uri_2,
-                        http_encoded_file_uri_2,
-                        s3_file_uri,
-                        s3_encoded_file_uri,
-                    ]
+        for item in json_body:
+            target_key = item["file_name"]
+
+            meta_file_key = self.META_FILE_PREFIX + target_key + self.META_FILE_SUFFIX
+            attributes = item["attributes"]
+
+            if self.storage_client.exists(meta_file_key):
+                meta = self.storage_client.get_json_object(meta_file_key)
+            else:
+                http_file_uri = self.HTTP_FILE_URI_PREFIX + target_key
+                http_encoded_file_uri = self.HTTP_FILE_URI_PREFIX + urllib.parse.quote(
+                    target_key
+                )
+                http_file_uri_2 = self.HTTP_FILE_URI_PREFIX_2 + target_key
+                http_encoded_file_uri_2 = (
+                    self.HTTP_FILE_URI_PREFIX_2 + urllib.parse.quote(target_key)
+                )
+                s3_file_uri = self.S3_FILE_URI_PREFIX + target_key
+                s3_encoded_file_uri = self.S3_FILE_URI_PREFIX + urllib.parse.quote(
+                    target_key
+                )
+                meta = {
+                    "Attributes": {
+                        "source_uris": [
+                            http_file_uri,
+                            http_encoded_file_uri,
+                            http_file_uri_2,
+                            http_encoded_file_uri_2,
+                            s3_file_uri,
+                            s3_encoded_file_uri,
+                        ]
+                    }
                 }
-            }
 
-        for key, value in attributes.items():
-            if isinstance(value, list):
-                attributes[key] = [str(v) for v in value]
-            meta["Attributes"][key] = attributes[key]
+            for key, value in attributes.items():
+                if isinstance(value, list):
+                    attributes[key] = [str(v) for v in value]
+                meta["Attributes"][key] = attributes[key]
 
-        result = self.storage_client.put_object(
-            meta_file_key, json.dumps(meta, ensure_ascii=False)
-        )
+            result = self.storage_client.put_object(
+                meta_file_key, json.dumps(meta, ensure_ascii=False)
+            )
 
-        return result
+            results.append(result)
+
+        return results
 
     @result_handler
     def init(self):
@@ -131,3 +139,13 @@ class FileAttrService:
                 meta_file_key, json.dumps(meta, ensure_ascii=False)
             )
         return {"status": "ok"}
+
+    def remove(self, target_key):
+        if target_key.startswith(self.META_FILE_PREFIX):
+            return
+        if self.storage_client.exists(target_key):
+            return
+        meta_file_key = self.META_FILE_PREFIX + target_key + self.META_FILE_SUFFIX
+        if self.storage_client.exists(meta_file_key):
+            self.storage_client.delete_object(meta_file_key)
+        return

@@ -17,7 +17,7 @@ class StorageClient:
             return True
         except:
             return False
-        
+
     def list_objects(self):
         response = self.client.list_objects(Bucket=self.bucket_name)
         return response.get("Contents", [])
@@ -31,5 +31,10 @@ class StorageClient:
         response = self.client.put_object(
             Bucket=self.bucket_name, Key=source_key, Body=body
         )
+
+        return response
+
+    def delete_object(self, source_key):
+        response = self.client.delete_object(Bucket=self.bucket_name, Key=source_key)
 
         return response
