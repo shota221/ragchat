@@ -35,7 +35,6 @@ class SearchEngineClient:
         return response
 
     def list_data_source_sync_jobs(self, condition: DataSourceSyncJobListCondition):
-
         response = self.client.list_data_source_sync_jobs(
             Id=self.data_source_id,
             IndexId=self.index_id,
@@ -82,14 +81,18 @@ class SearchEngineClient:
             IndexId=self.index_id,
             AttributeFilter=attribute_filter,
             PageSize=condition.page_size,
+            RequestedDocumentAttributes=["alias", "source_uris"],
         )
 
         print(response)
 
-        return [
-            InformationFragment(
-                text=highlight.get("Content","").replace('\\n', ' '),
-                source=highlight.get("DocumentTitle","")
-            )
-            for highlight in response.get("ResultItems", [])
-        ]
+        information_fragments = []
+
+        for highlight in response.get("ResultItems", []):
+            text = highlight.get("Content", "").replace("\\n", " ")
+            attrs = highlight.get("DocumentAttributes", [])
+            source = next((attr["Value"]["StringListValue"][0] for attr in attrs if attr["Key"] == "alias"), "")
+            information_fragments.append(InformationFragment(text=text, source=source))
+
+
+        return information_fragments

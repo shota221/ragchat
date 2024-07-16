@@ -3,3 +3,5 @@ boto3
 botocore
 fastjsonschema
 injector
+pypdfium2
+numpy
