@@ -36,7 +36,6 @@ class SearchEngineService:
             self.__set_sync_pending_flag()
             message = "Sync job is pending because of the inhibitor file."
         else:
-            self.__remove_sync_pending_flag()
             self.search_engine_client.start_data_source_sync_job()
             message = "Sync job has been requested."
 
@@ -68,9 +67,12 @@ class SearchEngineService:
             status=ConfirmSearchEngineSyncJobStatus.IN_PROGRESS.value
         )
     
-    def check_pending_sync_job(self):
-        if self.__is_sync_pending():
-            self.request_sync_job()
+    def dispatch_pending_sync_job(self):
+        if self.__is_sync_pending() and not self.storage_client.exists_dir(
+                self.S3_DESTINATION_BUCKET_NAME, file_util.INHIBITOR_FILE_PREFIX
+            ):
+                self.__remove_sync_pending_flag()
+                self.search_engine_client.start_data_source_sync_job()
 
     def __is_sync_pending(self):
         if self.storage_client.exists(
