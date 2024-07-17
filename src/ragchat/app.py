@@ -61,4 +61,4 @@ def on_s3_object_created(event):
 @app.on_s3_event(bucket=environ["S3_DESTINATION_BUCKET_NAME"], events=["s3:ObjectRemoved:Delete"], prefix=INHIBITOR_FILE_PREFIX)
 def on_inhibitor_removed(event):
     logger.info(f"on_inhibitor_removed: {event.key}")
-    injector.get(SearchEngineService).request_sync_job()
+    injector.get(SearchEngineService).check_pending_sync_job()

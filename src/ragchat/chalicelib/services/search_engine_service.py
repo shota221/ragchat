@@ -67,6 +67,10 @@ class SearchEngineService:
         return ConfirmSearchEngineSyncJobResult(
             status=ConfirmSearchEngineSyncJobStatus.IN_PROGRESS.value
         )
+    
+    def check_pending_sync_job(self):
+        if self.__is_sync_pending():
+            self.request_sync_job()
 
     def __is_sync_pending(self):
         if self.storage_client.exists(
