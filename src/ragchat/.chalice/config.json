@@ -51,8 +51,8 @@
       },
       "lambda_functions": {
         "on_s3_object_created": {
-          "lambda_timeout": 300,
-          "lambda_memory_size": 128
+          "lambda_timeout": 90,
+          "lambda_memory_size": 1024
         }
       }
     },
