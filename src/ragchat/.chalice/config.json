@@ -10,7 +10,8 @@
         "BEDROCK_REGION": "us-east-1",
         "BEDROCK_MODEL_ID": "anthropic.claude-3-5-sonnet-20240620-v1:0",
         "BEDROCK_EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
-        "S3_BUCKET_NAME": "ragchat-source-bucket"
+        "S3_SOURCE_BUCKET_NAME": "ragchat-source-bucket",
+        "S3_DESTINATION_BUCKET_NAME": "ragchat-destination-bucket"
       }
     },
     "dev": {
@@ -24,7 +25,14 @@
         "BEDROCK_REGION": "us-east-1",
         "BEDROCK_MODEL_ID": "anthropic.claude-3-5-sonnet-20240620-v1:0",
         "BEDROCK_EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
-        "S3_BUCKET_NAME": "ragchat-source-bucket"
+        "S3_SOURCE_BUCKET_NAME": "ragchat-source-bucket",
+        "S3_DESTINATION_BUCKET_NAME": "ragchat-destination-bucket"
+      },
+      "lambda_functions": {
+        "on_s3_object_created": {
+          "lambda_timeout": 90,
+          "lambda_memory_size": 1024
+        }
       }
     },
     "stg": {
@@ -38,7 +46,14 @@
         "BEDROCK_REGION": "us-east-1",
         "BEDROCK_MODEL_ID": "anthropic.claude-3-5-sonnet-20240620-v1:0",
         "BEDROCK_EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
-        "S3_BUCKET_NAME": "raglab-source-bucket"
+        "S3_SOURCE_BUCKET_NAME": "raglab-source-bucket",
+        "S3_DESTINATION_BUCKET_NAME": "raglab-destination-bucket"
+      },
+      "lambda_functions": {
+        "on_s3_object_created": {
+          "lambda_timeout": 90,
+          "lambda_memory_size": 1024
+        }
       }
     },
     "prod": {
