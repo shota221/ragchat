@@ -18,6 +18,8 @@ from chalicelib.schemas import send_inquiry_schema, generate_embedding_schema
 
 
 class InquiryService:
+    FINAL_CHUNK = "[END]"
+
     @inject
     def __init__(
         self,
@@ -64,3 +66,35 @@ class InquiryService:
         embedding = self.generation_ai_client.generate_embedding(json_body["text"])
 
         return GenerateEmbeddingResult(vector=embedding)
+    
+
+    def stream(self, json_body):
+        validate(event=json_body, schema=send_inquiry_schema.INPUT)
+
+        config = ConfigParser()
+        dir = os.path.dirname(os.path.abspath(__file__))
+        filepath = os.path.join(dir, 'prompt.ini')
+        config.read(filepath, encoding='utf-8')
+
+        prompt_builder = PromptBuilder(config)
+
+        query_text = json_body["user_text"]  
+        source_uris = json_body.get("conditions", {}).get("source_uris", [])
+        category_ids = json_body.get("conditions", {}).get("category_ids", [])
+
+        information_fragments = self.search_engine_client.search(
+            SearchCondition(query_text=query_text, source_uris=source_uris, category_ids=[str(v) for v in category_ids])
+        )
+
+        prompt = prompt_builder.build(
+            inquiry=json_body["user_text"],
+            informations=information_fragments,
+        )
+
+        for event in self.generation_ai_client.stream_message(prompt):
+            chunk = json.loads(event.get('chunk').get('bytes'))
+            if chunk.get('type') == 'content_block_delta' and chunk.get('delta').get('type') == 'text_delta':
+                content = chunk.get('delta').get('text')
+                if content:
+                    yield content
+        yield self.FINAL_CHUNK

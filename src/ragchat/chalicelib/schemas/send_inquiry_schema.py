@@ -3,7 +3,10 @@ INPUT = {
     "type": "object",
     "required": ["user_text"],
     "properties": {
-        "user_text": {"type": "string"},
+        "user_text": {
+            "type": "string",
+            "maxLength": 1000
+            },
         "conditions": {
             "type": "object",
             "properties": {
