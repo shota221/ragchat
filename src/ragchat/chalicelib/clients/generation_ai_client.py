@@ -17,21 +17,11 @@ class GenerationAiClient:
         self.client = boto3.client("bedrock-runtime", config=bedrock_config)
 
     def generate_message(self, user_text):
-        body = json.dumps(
-            {
-                "anthropic_version": "bedrock-2023-05-31",
-                "max_tokens": 1000,
-                "messages": [
-                    {"role": "user", "content": [{"type": "text", "text": user_text}]}
-                ],
-            }
-        )
-
         response = self.client.invoke_model(
             modelId=self.bedrock_model_id,
             accept="application/json",
             contentType="application/json",
-            body=body,
+            body=self.__generate_invoke_model_body(user_text),
         )
 
         response_body = json.loads(response["body"].read().decode("utf-8"))
@@ -57,3 +47,23 @@ class GenerationAiClient:
         embedding = response_body.get("embedding")
 
         return embedding
+
+
+    def stream_message(self, user_text):
+        bedrock_response = self.client.invoke_model_with_response_stream(
+            modelId=self.bedrock_model_id,
+            body=self.__generate_invoke_model_body(user_text),
+        )
+
+        return bedrock_response.get('body')
+
+    def __generate_invoke_model_body(self, user_text):
+        return json.dumps(
+            {
+                "anthropic_version": "bedrock-2023-05-31",
+                "max_tokens": 1000,
+                "messages": [
+                    {"role": "user", "content": [{"type": "text", "text": user_text}]}
+                ],
+            }
+        )

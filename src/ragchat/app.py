@@ -1,14 +1,21 @@
 from os import environ
+import json
 from logging import getLogger, getLevelName
 from injector import Injector
+import boto3
 from chalicelib.services.search_engine_service import SearchEngineService
 from chalicelib.services.inquiry_service import InquiryService
 from chalicelib.services.file_service import FileService
 from chalicelib.services.file_attr_service import FileAttrService
 from chalicelib.helper.file_util import INHIBITOR_FILE_PREFIX
-from chalice import Chalice
+from chalice import Chalice, WebsocketDisconnectedError
 
 app = Chalice(app_name="ragchat")
+
+app.websocket_api.session = boto3.Session()
+app.experimental_feature_flags.update({
+    'WEBSOCKETS',
+})
 
 logger = getLogger(__name__)
 logger.setLevel(getLevelName(environ.get("LOG_LEVEL", "DEBUG")))
@@ -62,3 +69,19 @@ def on_s3_object_created(event):
 def on_inhibitor_removed(event):
     logger.info(f"on_inhibitor_removed: {event.key}")
     injector.get(SearchEngineService).dispatch_pending_sync_job()
+
+
+######################
+# websocket          #
+######################
+
+@app.on_ws_message()
+def message(event):
+    try:
+        json_body=json.loads(event.body)
+        if json_body.get('action') == 'sendMessage':
+            for token in injector.get(InquiryService).stream(json_body.get('data')):
+                app.websocket_api.send(event.connection_id, token)
+    except WebsocketDisconnectedError as e:
+        print(f'Got error: {e}')
+    
