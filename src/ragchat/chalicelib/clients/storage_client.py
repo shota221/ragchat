@@ -27,17 +27,16 @@ class StorageClient:
     def list_objects(self, bucket, prefix=''):
         response = self.client.list_objects_v2(Bucket=bucket, Prefix=prefix)
         return response.get("Contents", [])
+    
+    def get_object(self, bucket, key):
+        obj = self.client.get_object(Bucket=bucket, Key=key)
+        return obj["Body"].read()
 
     def get_json_object(self, bucket, key):
         obj = self.client.get_object(Bucket=bucket, Key=key)
         json_str = obj["Body"].read().decode("utf-8")
         return json.loads(json_str)
     
-    def get_pdf_object(self, bucket, key):
-        obj = self.client.get_object(Bucket=bucket, Key=key)
-        pdf_bytes = obj["Body"].read()
-        return pdf_bytes
-
     def put_object(self, bucket, key, body):
         response = self.client.put_object(
             Bucket=bucket, Key=key, Body=body

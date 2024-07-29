@@ -169,7 +169,7 @@ class FileService:
             self.preprocess(obj["Key"])
 
     def __text_extractor(self, source_key, chunk_size, buffer_text_length):
-        pdf_obj = self.storage_client.get_pdf_object(
+        pdf_obj = self.storage_client.get_object(
             bucket=self.S3_SOURCE_BUCKET_NAME, key=source_key
         )
         pdf = pypdfium2.PdfDocument(BytesIO(pdf_obj))

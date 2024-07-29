@@ -6,6 +6,7 @@ import boto3
 from chalicelib.services.search_engine_service import SearchEngineService
 from chalicelib.services.inquiry_service import InquiryService
 from chalicelib.services.file_service import FileService
+from chalicelib.services.document_service import DocumentService
 from chalicelib.services.file_attr_service import FileAttrService
 from chalicelib.helper.file_util import INHIBITOR_FILE_PREFIX
 from chalice import Chalice, WebsocketDisconnectedError
@@ -49,6 +50,10 @@ def update_file_attr():
 @app.route("/files/_preprocess", methods=["POST"])
 def preprocess_files():
     return injector.get(FileService).preprocess_all()
+
+@app.route("/documents/check", methods=["POST"])
+def check_document():
+    return injector.get(DocumentService).check(app.current_request.json_body)
 
 
 ######################
