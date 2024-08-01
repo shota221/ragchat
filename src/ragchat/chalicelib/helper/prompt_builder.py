@@ -2,6 +2,7 @@ import json
 import os
 import re
 import textwrap
+from dataclasses import asdict
 from configparser import ConfigParser
 from typing import List
 from chalicelib.dataclasses.information_fragment import InformationFragment
@@ -24,45 +25,15 @@ class PromptBuilder:
         section: str = "INQUIRY",
     ) -> str:
         config = self.config[section]
-
-        preface = config.get("Preface", "").strip()
-
+        promprt_format = config.get("Format", "")
         rules = config.get("Rules", "").strip().splitlines()
 
-        rule_prompts = ""
-
-        for rule in rules:
-            rule_prompts = rule_prompts + "・" + rule + "\n"
-
-        information_prompts = ""
-
-        for information in informations:
-            information_prompts = (
-                information_prompts
-                + "情報:「"
-                + information.text
-                + "」（出典:"
-                + information.source
-                + "）\n"
-            )
-
-        if not information_prompts:
-            information_prompts = "情報: なし"
-
-        prompt = f"""
-
-    {preface}
-
-    ルール:
-    {rule_prompts}
-
-    {information_prompts}
-
-    問い合わせ:「{inquiry}」 """
-
-        print(prompt)
-
-        return prompt
+        return self.__fill_in_xml(
+            promprt_format,
+            informations=json.dumps([asdict(info) for info in informations], ensure_ascii=False),
+            rules=json.dumps(rules, ensure_ascii=False),
+            inquiry=inquiry
+        )
 
     def build_doc_check_prompt(
         self,
