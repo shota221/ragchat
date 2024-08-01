@@ -16,15 +16,17 @@ class GenerationAiClient:
         )
         self.client = boto3.client("bedrock-runtime", config=bedrock_config)
 
-    def generate_message(self, user_text):
+    def generate_message(self, user_text, assistant_text = None, max_tokens=1000, temperature= 1, top_p=0.999):
         response = self.client.invoke_model(
             modelId=self.bedrock_model_id,
             accept="application/json",
             contentType="application/json",
-            body=self.__generate_invoke_model_body(user_text),
+            body=self.__generate_invoke_model_body(user_text, assistant_text, max_tokens, temperature, top_p),
         )
 
         response_body = json.loads(response["body"].read().decode("utf-8"))
+
+        print(json.dumps(response_body["usage"]))
 
         return response_body["content"][0]["text"]
 
@@ -57,13 +59,20 @@ class GenerationAiClient:
 
         return bedrock_response.get('body')
 
-    def __generate_invoke_model_body(self, user_text):
+    def __generate_invoke_model_body(self, user_text, assistant_text = None, max_tokens=1000, temperature= 1, top_p=0.999):
+        messages = [
+            {"role": "user", "content": [{"type": "text", "text": user_text}]},
+        ]
+        if assistant_text:
+            messages.append(
+                {"role": "assistant", "content": [{"type": "text", "text": assistant_text}]}
+            )
         return json.dumps(
             {
                 "anthropic_version": "bedrock-2023-05-31",
-                "max_tokens": 1000,
-                "messages": [
-                    {"role": "user", "content": [{"type": "text", "text": user_text}]}
-                ],
+                "max_tokens": max_tokens,
+                "messages": messages,
+                "temperature": temperature,
+                "top_p": top_p,
             }
         )

@@ -6,6 +6,7 @@ import boto3
 from chalicelib.services.search_engine_service import SearchEngineService
 from chalicelib.services.inquiry_service import InquiryService
 from chalicelib.services.file_service import FileService
+from chalicelib.services.document_service import DocumentService
 from chalicelib.services.file_attr_service import FileAttrService
 from chalicelib.helper.file_util import INHIBITOR_FILE_PREFIX
 from chalice import Chalice, WebsocketDisconnectedError
@@ -46,10 +47,25 @@ def generate_embedding():
 def update_file_attr():
     return injector.get(FileAttrService).update(app.current_request.json_body)
 
-@app.route("/files/_preprocess", methods=["POST"])
-def preprocess_files():
-    return injector.get(FileService).preprocess_all()
+# @app.route("/files/_preprocess", methods=["POST"])
+# def preprocess_files():
+#     return injector.get(FileService).preprocess_all()
 
+@app.route("/documents/check", methods=["POST"])
+def check_document():
+    return injector.get(DocumentService).check(app.current_request.json_body)
+
+@app.route("/documents/check_job/start", methods=["POST"])
+def start_check_document_job():
+    return injector.get(DocumentService).start_check_job(app.current_request.json_body)
+
+# @app.route("/documents/check_job/stop", methods=["POST"])
+# def stop_check_document_job():
+#     return injector.get(DocumentService).stop_check_job(app.current_request.json_body)
+
+@app.route("/documents/check_job/confirm", methods=["GET"])
+def get_check_document_job_status():
+    return injector.get(DocumentService).confirm_check_job(app.current_request.query_params)
 
 ######################
 # event handlers     #
@@ -69,6 +85,12 @@ def on_s3_object_created(event):
 def on_inhibitor_removed(event):
     logger.info(f"on_inhibitor_removed: {event.key}")
     injector.get(SearchEngineService).dispatch_pending_sync_job()
+
+@app.on_sqs_message(queue=environ["SQS_DOC_CHECK_QUEUE_NAME"])
+def on_sqs_doc_check_request(event):
+    for record in event:
+        # record.bodyの最大長は256KB
+        injector.get(DocumentService).handle_doc_check_request(record.to_dict().get('messageId'), json.loads(record.body))
 
 
 ######################

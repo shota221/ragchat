@@ -4,4 +4,5 @@ botocore
 fastjsonschema
 injector
 pypdfium2
+python-docx
 numpy

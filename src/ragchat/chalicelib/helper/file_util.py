@@ -24,6 +24,8 @@ HTTP_FILE_URI_PREFIX_2 = (
 S3_FILE_URI_PREFIX = "s3://" + S3_SOURCE_BUCKET_NAME + "/"
 TMP_META_FILENAME = "tmp.metadata.json"
 SYNC_PENDING_FLAG = "sync_pending.flag"
+PDF_EXTENSION = ".pdf"
+WORD_EXTENSION = ".docx"
 
 
 def is_meta_file(key):
@@ -91,3 +93,11 @@ def guess_preprocessing_destination_dir(source_key):
 
 def guess_preprocessing_flag_key(source_key):
     return f"{INHIBITOR_FILE_PREFIX}{source_key}{PREPROCESSING_FLAG_SUFFIX}"
+
+
+def is_pdf(key):
+    return key.lower().endswith(PDF_EXTENSION)
+
+def is_word(key):
+    return key.lower().endswith(WORD_EXTENSION)
+

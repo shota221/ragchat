@@ -11,7 +11,10 @@
         "BEDROCK_MODEL_ID": "anthropic.claude-3-5-sonnet-20240620-v1:0",
         "BEDROCK_EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
         "S3_SOURCE_BUCKET_NAME": "ragchat-source-bucket",
-        "S3_DESTINATION_BUCKET_NAME": "ragchat-destination-bucket"
+        "S3_DESTINATION_BUCKET_NAME": "ragchat-destination-bucket",
+        "S3_CHECK_TARGET_BUCKET_NAME": "ragchat-check-target-bucket",
+        "SQS_DOC_CHECK_QUEUE_NAME": "ragchat-doc-check-queue",
+        "DYNAMODB_JOB_TABLE_NAME": "ragchat-job-table"
       }
     },
     "dev": {
@@ -26,11 +29,18 @@
         "BEDROCK_MODEL_ID": "anthropic.claude-3-5-sonnet-20240620-v1:0",
         "BEDROCK_EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
         "S3_SOURCE_BUCKET_NAME": "ragchat-source-bucket",
-        "S3_DESTINATION_BUCKET_NAME": "ragchat-destination-bucket"
+        "S3_DESTINATION_BUCKET_NAME": "ragchat-destination-bucket",
+        "S3_CHECK_TARGET_BUCKET_NAME": "ragchat-check-target-bucket",
+        "SQS_DOC_CHECK_QUEUE_NAME": "ragchat-doc-check-queue",
+        "DYNAMODB_JOB_TABLE_NAME": "ragchat-job-table"
       },
       "lambda_functions": {
         "on_s3_object_created": {
           "lambda_timeout": 90,
+          "lambda_memory_size": 1024
+        },
+        "on_sqs_doc_check_request": {
+          "lambda_timeout": 120,
           "lambda_memory_size": 1024
         }
       }
@@ -47,7 +57,8 @@
         "BEDROCK_MODEL_ID": "anthropic.claude-3-5-sonnet-20240620-v1:0",
         "BEDROCK_EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
         "S3_SOURCE_BUCKET_NAME": "raglab-source-bucket",
-        "S3_DESTINATION_BUCKET_NAME": "raglab-destination-bucket"
+        "S3_DESTINATION_BUCKET_NAME": "raglab-destination-bucket",
+        "S3_CHECK_TARGET_BUCKET_NAME": "raglab-check-target-bucket"
       },
       "lambda_functions": {
         "on_s3_object_created": {

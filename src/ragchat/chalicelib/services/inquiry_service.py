@@ -1,7 +1,5 @@
-import configparser
 import os
 import json
-from configparser import ConfigParser
 import boto3
 from injector import inject
 from aws_lambda_powertools.utilities.validation import validate
@@ -9,8 +7,7 @@ from chalicelib.helper import result_handler, PromptBuilder
 from chalicelib.clients.generation_ai_client import GenerationAiClient
 from chalicelib.clients.search_engine_client import (
     SearchEngineClient,
-    SearchCondition,
-    DataSourceSyncJobListCondition,
+    SearchCondition
 )
 from chalicelib.dataclasses.send_inquiry_result import SendInquiryResult
 from chalicelib.dataclasses.generate_embedding_result import GenerateEmbeddingResult
@@ -33,12 +30,7 @@ class InquiryService:
     def send(self, json_body):
         validate(event=json_body, schema=send_inquiry_schema.INPUT)
 
-        config = ConfigParser()
-        dir = os.path.dirname(os.path.abspath(__file__))
-        filepath = os.path.join(dir, 'prompt.ini')
-        config.read(filepath, encoding='utf-8')
-
-        prompt_builder = PromptBuilder(config)
+        prompt_builder = PromptBuilder()
 
         query_text = json_body["user_text"]  
         source_uris = json_body.get("conditions", {}).get("source_uris", [])
@@ -48,7 +40,7 @@ class InquiryService:
             SearchCondition(query_text=query_text, source_uris=source_uris, category_ids=[str(v) for v in category_ids])
         )
 
-        prompt = prompt_builder.build(
+        prompt = prompt_builder.build_inquiry_prompt(
             inquiry=json_body["user_text"],
             informations=information_fragments,
         )
@@ -71,12 +63,7 @@ class InquiryService:
     def stream(self, json_body):
         validate(event=json_body, schema=send_inquiry_schema.INPUT)
 
-        config = ConfigParser()
-        dir = os.path.dirname(os.path.abspath(__file__))
-        filepath = os.path.join(dir, 'prompt.ini')
-        config.read(filepath, encoding='utf-8')
-
-        prompt_builder = PromptBuilder(config)
+        prompt_builder = PromptBuilder()
 
         query_text = json_body["user_text"]  
         source_uris = json_body.get("conditions", {}).get("source_uris", [])
@@ -86,7 +73,7 @@ class InquiryService:
             SearchCondition(query_text=query_text, source_uris=source_uris, category_ids=[str(v) for v in category_ids])
         )
 
-        prompt = prompt_builder.build(
+        prompt = prompt_builder.build_inquiry_prompt(
             inquiry=json_body["user_text"],
             informations=information_fragments,
         )
