@@ -45,6 +45,8 @@ class InquiryService:
             informations=information_fragments,
         )
 
+        print(f"prompt: {prompt}")
+
         assistant_text = self.generation_ai_client.generate_message(prompt)
 
         user_text_embedding = self.generation_ai_client.generate_embedding(query_text)
@@ -77,6 +79,8 @@ class InquiryService:
             inquiry=json_body["user_text"],
             informations=information_fragments,
         )
+
+        print(f"prompt: {prompt}")
 
         for event in self.generation_ai_client.stream_message(prompt):
             chunk = json.loads(event.get('chunk').get('bytes'))
