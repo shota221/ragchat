@@ -68,7 +68,7 @@ class PromptBuilder:
         self,
         document: str,
         checklist: str,
-        policy: str,
+        policy: str = None,
         section: str = "DOC_CHECK",
     ) -> str:
         config = self.config[section]

@@ -22,6 +22,16 @@
 		},
 		{
 			"Effect": "Allow",
+			"Action": "sqs:*",
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": "dynamodb:*",
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
 			"Action": [
 			  "execute-api:ManageConnections"
 			],

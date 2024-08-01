@@ -6,8 +6,8 @@ from chalicelib.helper import result_handler, utc2jst, file_util
 from chalicelib.dataclasses.confirm_search_engine_sync_job_result import (
     ConfirmSearchEngineSyncJobResult,
 )
-from chalicelib.enums.confirm_search_engine_sync_job_status import (
-    ConfirmSearchEngineSyncJobStatus,
+from chalicelib.enums.job_status import (
+    JobStatus,
 )
 from chalicelib.dataclasses.general_result import GeneralResult
 from chalicelib.enums.result_general import ResultGeneral
@@ -45,11 +45,11 @@ class SearchEngineService:
     def confirm_sync_job(self):
         if self.__is_sync_pending():
             return ConfirmSearchEngineSyncJobResult(
-                status=ConfirmSearchEngineSyncJobStatus.PENDING.value
+                status=JobStatus.PENDING.value
             )
         if self.__is_syncing():
             return ConfirmSearchEngineSyncJobResult(
-                status=ConfirmSearchEngineSyncJobStatus.IN_PROGRESS.value
+                status=JobStatus.IN_PROGRESS.value
             )
 
         end_time = self.__get_nomally_completed_time()
@@ -57,14 +57,14 @@ class SearchEngineService:
             utc_time = end_time.strftime("%Y-%m-%d %H:%M:%S")
             jst_time = utc2jst(utc_time)
             return ConfirmSearchEngineSyncJobResult(
-                status=ConfirmSearchEngineSyncJobStatus.COMPLETED.value,
+                status=JobStatus.COMPLETED.value,
                 end_time=jst_time,
             )
 
         self.request_sync_job()
 
         return ConfirmSearchEngineSyncJobResult(
-            status=ConfirmSearchEngineSyncJobStatus.IN_PROGRESS.value
+            status=JobStatus.IN_PROGRESS.value
         )
     
     def dispatch_pending_sync_job(self):
