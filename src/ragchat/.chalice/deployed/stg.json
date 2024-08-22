@@ -52,6 +52,25 @@
       "lambda_arn": "arn:aws:lambda:ap-northeast-1:170253932171:function:ragchat-stg-on_inhibitor_removed"
     },
     {
+      "name": "on_sqs_doc_check_request_role",
+      "resource_type": "iam_role",
+      "role_arn": "arn:aws:iam::170253932171:role/ragchat-stg-on_sqs_doc_check_request",
+      "role_name": "ragchat-stg-on_sqs_doc_check_request"
+    },
+    {
+      "name": "on_sqs_doc_check_request",
+      "resource_type": "lambda_function",
+      "lambda_arn": "arn:aws:lambda:ap-northeast-1:170253932171:function:ragchat-stg-on_sqs_doc_check_request"
+    },
+    {
+      "name": "on_sqs_doc_check_request-sqs-event-source",
+      "resource_type": "sqs_event",
+      "queue_arn": "arn:aws:sqs:ap-northeast-1:170253932171:raglab-doc-check-queue",
+      "event_uuid": "1c62edea-0c48-4b88-9d6b-767ed4b85e91",
+      "queue": "raglab-doc-check-queue",
+      "lambda_arn": "arn:aws:lambda:ap-northeast-1:170253932171:function:ragchat-stg-on_sqs_doc_check_request"
+    },
+    {
       "name": "api_handler_role",
       "resource_type": "iam_role",
       "role_arn": "arn:aws:iam::170253932171:role/ragchat-stg-api_handler",

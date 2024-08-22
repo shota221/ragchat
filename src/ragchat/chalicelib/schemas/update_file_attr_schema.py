@@ -3,12 +3,16 @@ INPUT = {
     "type": "array",
     "items": {
         "type": "object",
-        "required": ["file_name", "attributes"],
+        "required": ["file_key", "attributes"],
         "properties": {
-            "file_name": {"type": "string"},
+            "file_key": {"type": "string"},
             "attributes": {
                 "type": "object",
-                "properties": {"category_ids": {"type": "array"}},
+                "properties": {
+                    "file_name": {"type": "string"},
+                    "category_ids": {"type": "array"},
+                    "group_ids": {"type": "array"},
+                },
             },
         },
     },

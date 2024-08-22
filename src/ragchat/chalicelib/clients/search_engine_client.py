@@ -4,6 +4,7 @@ from typing import List
 import boto3
 from injector import singleton
 from chalicelib.dataclasses.information_fragment import InformationFragment
+from chalicelib.helper import file_util
 
 
 @dataclass
@@ -16,9 +17,10 @@ class DataSourceSyncJobListCondition:
 @dataclass
 class SearchCondition:
     query_text: str
-    source_uris: List[str] = None
+    file_keys: List[str] = None
     category_ids: List[str] = None
     page_size: int = 10
+
 
 @singleton
 class SearchEngineClient:
@@ -44,23 +46,40 @@ class SearchEngineClient:
 
         return response.get("History", [])
 
-    def search(self, condition: SearchCondition):
+    def search(self, user_group_id, condition: SearchCondition):
+        group_filter = {
+            "ContainsAny": {
+                "Key": "group_ids",
+                "Value": {
+                    "StringListValue": [
+                        str(user_group_id),
+                        file_util.ALL_GROUP_ID,
+                    ]
+                },
+            }
+        }
+
         or_all_filters = []
-        if condition.source_uris:
-            or_all_filters.append({
-                "ContainsAny": {
-                    "Key": "source_uris",
-                    "Value": {"StringListValue": condition.source_uris},
+
+        if condition.file_keys:
+            or_all_filters.append(
+                {
+                    "ContainsAny": {
+                        "Key": "source_key",
+                        "Value": {"StringListValue": condition.file_keys},
+                    }
                 }
-            })
+            )
 
         if condition.category_ids:
-            or_all_filters.append({
-                "ContainsAny": {
-                    "Key": "category_ids",
-                    "Value": {"StringListValue": condition.category_ids},
+            or_all_filters.append(
+                {
+                    "ContainsAny": {
+                        "Key": "category_ids",
+                        "Value": {"StringListValue": condition.category_ids},
+                    }
                 }
-            })
+            )
 
         attribute_filter = {
             "AndAllFilters": [
@@ -70,9 +89,8 @@ class SearchEngineClient:
                         "Value": {"StringValue": "ja"},
                     },
                 },
-                { 
-                    "OrAllFilters": or_all_filters
-                }
+                {"OrAllFilters": or_all_filters},
+                group_filter,
             ]
         }
 
@@ -81,7 +99,7 @@ class SearchEngineClient:
             IndexId=self.index_id,
             AttributeFilter=attribute_filter,
             PageSize=condition.page_size,
-            RequestedDocumentAttributes=["alias", "source_uris"],
+            RequestedDocumentAttributes=["source_key", "source_name"],
         )
 
         print(response)
@@ -91,8 +109,14 @@ class SearchEngineClient:
         for highlight in response.get("ResultItems", []):
             text = highlight.get("Content", "").replace("\\n", " ")
             attrs = highlight.get("DocumentAttributes", [])
-            source = next((attr["Value"]["StringListValue"][0] for attr in attrs if attr["Key"] == "alias"), "")
+            source = next(
+                (
+                    attr["Value"]["StringListValue"][0]
+                    for attr in attrs
+                    if attr["Key"] == "source_name"
+                ),
+                "",
+            )
             information_fragments.append(InformationFragment(text=text, source=source))
-
 
         return information_fragments

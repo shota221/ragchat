@@ -21,7 +21,7 @@ class FileAttrService:
         validate(event=json_body, schema=update_file_attr_schema.INPUT)
 
         for item in json_body:
-            target_key = item["file_name"]
+            target_key = item["file_key"]
 
             if not self.storage_client.exists(self.S3_SOURCE_BUCKET_NAME, target_key):
                 raise Exception(f"File not found: {target_key}")
@@ -29,7 +29,7 @@ class FileAttrService:
         results = []
 
         for item in json_body:
-            target_key = item["file_name"]
+            target_key = item["file_key"]
 
             meta_file_dir = file_util.guess_meta_dir(target_key)
             attributes = item["attributes"]

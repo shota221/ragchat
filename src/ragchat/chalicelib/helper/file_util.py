@@ -7,25 +7,11 @@ META_FILE_PREFIX = "meta/"
 META_FILE_SUFFIX = ".metadata.json"
 INHIBITOR_FILE_PREFIX = "inhibitor/"
 PREPROCESSING_FLAG_SUFFIX = ".preprocessing.flag"
-HTTP_FILE_URI_PREFIX = (
-    "https://s3-"
-    + os.environ["AWS_DEFAULT_REGION"]
-    + ".amazonaws.com/"
-    + S3_SOURCE_BUCKET_NAME
-    + "/"
-)
-HTTP_FILE_URI_PREFIX_2 = (
-    "https://"
-    + S3_SOURCE_BUCKET_NAME
-    + ".s3."
-    + os.environ["AWS_DEFAULT_REGION"]
-    + ".amazonaws.com/"
-)
-S3_FILE_URI_PREFIX = "s3://" + S3_SOURCE_BUCKET_NAME + "/"
 TMP_META_FILENAME = "tmp.metadata.json"
 SYNC_PENDING_FLAG = "sync_pending.flag"
 PDF_EXTENSION = ".pdf"
 WORD_EXTENSION = ".docx"
+ALL_GROUP_ID = "all"
 
 
 def is_meta_file(key):
@@ -53,24 +39,13 @@ def guess_tmp_meta_key(source_key):
 
 
 def generate_meta(source_key, attributes=None):
-    http_file_uri = HTTP_FILE_URI_PREFIX + source_key
-    http_encoded_file_uri = HTTP_FILE_URI_PREFIX + urllib.parse.quote(source_key)
-    http_file_uri_2 = HTTP_FILE_URI_PREFIX_2 + source_key
-    http_encoded_file_uri_2 = HTTP_FILE_URI_PREFIX_2 + urllib.parse.quote(source_key)
-    s3_file_uri = S3_FILE_URI_PREFIX + source_key
-    s3_encoded_file_uri = S3_FILE_URI_PREFIX + urllib.parse.quote(source_key)
     meta = {
         "Attributes": {
-            "alias": [source_key],
-            "source_uris": [
-                http_file_uri,
-                http_encoded_file_uri,
-                http_file_uri_2,
-                http_encoded_file_uri_2,
-                s3_file_uri,
-                s3_encoded_file_uri,
-            ],
-        },
+            "source_key": [source_key],
+            "source_name": [os.path.basename(source_key)],
+            "category_ids": [],
+            "group_ids": [ALL_GROUP_ID]
+        }
     }
 
     if attributes:
@@ -80,9 +55,12 @@ def generate_meta(source_key, attributes=None):
 
 def overwrite_meta(meta, attributes):
     for key, value in attributes.items():
-        if isinstance(value, list):
-            attributes[key] = [str(v) for v in value]
-        meta["Attributes"][key] = attributes[key]
+        if key == "file_name":
+            meta["Attributes"]["source_name"] = [value]
+        elif key == "category_ids":
+            meta["Attributes"][key] = [str(i) for i in value]
+        elif key == "group_ids":
+            meta["Attributes"][key] = [str(i) for i in value] or [ALL_GROUP_ID]
     return meta
 
 
@@ -98,6 +76,6 @@ def guess_preprocessing_flag_key(source_key):
 def is_pdf(key):
     return key.lower().endswith(PDF_EXTENSION)
 
+
 def is_word(key):
     return key.lower().endswith(WORD_EXTENSION)
-

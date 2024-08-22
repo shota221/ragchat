@@ -32,12 +32,14 @@ class InquiryService:
 
         prompt_builder = PromptBuilder()
 
+        user_group_id = json_body["user_group_id"]
         query_text = json_body["user_text"]  
-        source_uris = json_body.get("conditions", {}).get("source_uris", [])
+        file_keys = json_body.get("conditions", {}).get("file_keys", [])
         category_ids = json_body.get("conditions", {}).get("category_ids", [])
 
         information_fragments = self.search_engine_client.search(
-            SearchCondition(query_text=query_text, source_uris=source_uris, category_ids=[str(v) for v in category_ids])
+            user_group_id,
+            SearchCondition(query_text=query_text, file_keys=file_keys, category_ids=[str(v) for v in category_ids])
         )
 
         prompt = prompt_builder.build_inquiry_prompt(
@@ -67,12 +69,14 @@ class InquiryService:
 
         prompt_builder = PromptBuilder()
 
+        user_group_id = json_body["user_group_id"]
         query_text = json_body["user_text"]  
-        source_uris = json_body.get("conditions", {}).get("source_uris", [])
+        file_keys = json_body.get("conditions", {}).get("file_keys", [])
         category_ids = json_body.get("conditions", {}).get("category_ids", [])
 
         information_fragments = self.search_engine_client.search(
-            SearchCondition(query_text=query_text, source_uris=source_uris, category_ids=[str(v) for v in category_ids])
+            user_group_id,
+            SearchCondition(query_text=query_text, file_keys=file_keys, category_ids=[str(v) for v in category_ids])
         )
 
         prompt = prompt_builder.build_inquiry_prompt(
