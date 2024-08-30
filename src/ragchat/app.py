@@ -47,27 +47,6 @@ def generate_embedding():
 def update_file_attr():
     return injector.get(FileAttrService).update(app.current_request.json_body)
 
-# @app.route("/files/_preprocess", methods=["POST"])
-# def preprocess_files():
-#     return injector.get(FileService).preprocess_all()
-
-# @app.route("/documents/check", methods=["POST"])
-# def check_document():
-#     return injector.get(DocumentService).check(app.current_request.json_body)
-
-# @app.route("/documents/check_job/start", methods=["POST"])
-# def start_check_document_job():
-#     return injector.get(DocumentService).start_check_job(app.current_request.json_body)
-
-# @app.route("/documents/check_job/stop", methods=["POST"])
-# def stop_check_document_job():
-#     return injector.get(DocumentService).stop_check_job(app.current_request.json_body)
-
-# @app.route("/documents/check_job/confirm", methods=["GET"])
-# def get_check_document_job_status():
-#     return injector.get(DocumentService).confirm_check_job(app.current_request.query_params)
-
-### checkを分ける場合
 @app.route("/documents/checklist_check_job/start", methods=["POST"])
 def start_check_document_checklist_job():
     return injector.get(DocumentService).start_checklist_check_job(app.current_request.json_body)
