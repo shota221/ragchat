@@ -1,7 +1,6 @@
 import os
 from dataclasses import dataclass
 from chalicelib.models.base_model import BaseModel
-from chalicelib.dataclasses.check_document_result import CheckDocumentResult
 
 @dataclass
 class JobModel(BaseModel):

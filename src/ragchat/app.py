@@ -51,20 +51,45 @@ def update_file_attr():
 # def preprocess_files():
 #     return injector.get(FileService).preprocess_all()
 
-@app.route("/documents/check", methods=["POST"])
-def check_document():
-    return injector.get(DocumentService).check(app.current_request.json_body)
+# @app.route("/documents/check", methods=["POST"])
+# def check_document():
+#     return injector.get(DocumentService).check(app.current_request.json_body)
 
-@app.route("/documents/check_job/start", methods=["POST"])
-def start_check_document_job():
-    return injector.get(DocumentService).start_check_job(app.current_request.json_body)
+# @app.route("/documents/check_job/start", methods=["POST"])
+# def start_check_document_job():
+#     return injector.get(DocumentService).start_check_job(app.current_request.json_body)
 
 # @app.route("/documents/check_job/stop", methods=["POST"])
 # def stop_check_document_job():
 #     return injector.get(DocumentService).stop_check_job(app.current_request.json_body)
 
-@app.route("/documents/check_job/confirm", methods=["GET"])
-def get_check_document_job_status():
+# @app.route("/documents/check_job/confirm", methods=["GET"])
+# def get_check_document_job_status():
+#     return injector.get(DocumentService).confirm_check_job(app.current_request.query_params)
+
+### checkを分ける場合
+@app.route("/documents/checklist_check_job/start", methods=["POST"])
+def start_check_document_checklist_job():
+    return injector.get(DocumentService).start_checklist_check_job(app.current_request.json_body)
+
+@app.route("/documents/consistency_check_job/start", methods=["POST"])
+def start_check_document_consistency_job():
+    return injector.get(DocumentService).start_consistency_check_job(app.current_request.json_body)
+
+@app.route("/documents/typo_check_job/start", methods=["POST"])
+def start_check_document_typo_job():
+    return injector.get(DocumentService).start_typo_check_job(app.current_request.json_body)
+
+@app.route("/documents/checklist_check_job/confirm", methods=["GET"])
+def confirm_check_document_checklist_job():
+    return injector.get(DocumentService).confirm_check_job(app.current_request.query_params)
+
+@app.route("/documents/consistency_check_job/confirm", methods=["GET"])
+def confirm_check_document_consistency_job():
+    return injector.get(DocumentService).confirm_check_job(app.current_request.query_params)
+
+@app.route("/documents/typo_check_job/confirm", methods=["GET"])
+def confirm_check_document_typo():
     return injector.get(DocumentService).confirm_check_job(app.current_request.query_params)
 
 ######################
