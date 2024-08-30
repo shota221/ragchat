@@ -1,5 +1,6 @@
 import os
 import json
+from dataclasses import asdict
 from xml.etree.ElementTree import Element, SubElement, ElementTree, tostring
 import docx
 from io import BytesIO
@@ -11,26 +12,36 @@ from chalicelib.helper import result_handler, PromptBuilder, file_util
 from chalicelib.clients.generation_ai_client import GenerationAiClient
 from chalicelib.clients.queueing_client import QueueingClient
 from chalicelib.clients.storage_client import StorageClient
-from chalicelib.dataclasses.check_document_result import (
-    ChecklistItem,
-    TyposItem,
-    CheckDocumentResult,
+from chalicelib.dataclasses.check_document_checklist_result import (
+    ChecklistResultItem,
+    CheckDocumentChecklistResult
 )
+from chalicelib.dataclasses.check_document_consistency_result import (
+    ConsistencyResultItem,
+    CheckDocumentConsistencyResult
+)
+from chalicelib.dataclasses.check_document_typo_result import (
+    TypoResultItem,
+    CheckDocumentTypoResult
+)
+from chalicelib.dataclasses.doc_check_queue_message_body import DocCheckQueueMessageBody
 from chalicelib.dataclasses.start_doc_check_job_result import StartDocCheckJobResult
 from chalicelib.dataclasses.confirm_doc_check_job_result import ConfirmDocCheckJobResult
-from chalicelib.schemas import check_document_schema, generation_ai_doc_check_schema
+from chalicelib.schemas import check_document_checklist_schema, check_document_typo_schema, check_document_consistency_schema
 from chalicelib.models.job_model import JobModel
 from chalicelib.repositories.job_repository import JobRepository
 from chalicelib.enums.job_status import JobStatus
+from chalicelib.enums.doc_check_type import DocCheckType
+from chalicelib.schemas import generation_ai_schema
 
 
 class DocumentService:
-    S3_CHECK_TARGET_BUCKET_NAME = os.environ["S3_CHECK_TARGET_BUCKET_NAME"]
+    S3_DOCUMENT_BUCKET_NAME = os.environ["S3_DOCUMENT_BUCKET_NAME"]
     SQS_DOC_CHECK_QUEUE_NAME = os.environ["SQS_DOC_CHECK_QUEUE_NAME"]
     PDF_EXTENSION = ".pdf"
     WORD_EXTENSION = ".docx"
-    ASSISTANT_TEXT_PREFIX = "{"
-    ASSISTANT_TEXT_SUFFIX = "}"
+    ASSISTANT_TEXT_PREFIX = "["
+    ASSISTANT_TEXT_SUFFIX = "]"
     CHECKLIST_CHUNK_SIZE = 20
     CHECKLIST_SIZE_THRESHOLD = 10
 
@@ -47,102 +58,144 @@ class DocumentService:
         self.storage_client = storage_client
         self.job_repository = job_repository
         self.prompt_builder = PromptBuilder()
-
+    
     @result_handler
-    def check(self, json_body):
-        validate(event=json_body, schema=check_document_schema.INPUT)
+    def check_typo(self, json_body):
+        validate(event=json_body, schema=check_document_typo_schema.INPUT)
         target_key = json_body["target_key"]
-        if not self.storage_client.exists(self.S3_CHECK_TARGET_BUCKET_NAME, target_key):
+        if not self.storage_client.exists(self.S3_DOCUMENT_BUCKET_NAME, target_key):
             raise Exception(f"File not found: {target_key}")
 
         document = self.__extract_text(target_key)
-        checklist = json_body["checklist"]
-        summary_policy = json_body["summary_policy"]
 
-        checklist_early_head, checklist_late_tail = checklist[:self.CHECKLIST_SIZE_THRESHOLD], checklist[self.CHECKLIST_SIZE_THRESHOLD:]
+        prompt = self.prompt_builder.build_doc_typo_check_prompt(document)
+        res = self.__assistant_check_result(prompt, generation_ai_schema.DOC_TYPO_CHECK)
 
-        res = self.__assistant_check_result(document, checklist_early_head, summary_policy)
-
-        result = CheckDocumentResult(
-            checklist=[
-                ChecklistItem(
-                    id=item["id"],
-                    result=item["res"],
-                    quotes=item["qot"],
-                    references=item["ref"],
-                    comment=item["cmt"],
-                )
-                for item in res["checklist"]
-            ],
-            typos=[
-                TyposItem(
+        return CheckDocumentTypoResult(
+            result=[
+                TypoResultItem(
                     original=item["org"],
                     corrected=item["cor"],
                 )
-                for item in res["typos"] if item["org"] != item["cor"]
+                for item in res if item["org"] != item["cor"]
             ],
-            summary=res["summary"],
         )
+    
+    @result_handler
+    def check_consistency(self, json_body):
+        validate(event=json_body, schema=check_document_consistency_schema.INPUT)
+        target_key = json_body["target_key"]
+        if not self.storage_client.exists(self.S3_DOCUMENT_BUCKET_NAME, target_key):
+            raise Exception(f"File not found: {target_key}")
+        
+        reference_key = json_body["reference_key"]
+        if not self.storage_client.exists(self.S3_DOCUMENT_BUCKET_NAME, reference_key):
+            raise Exception(f"File not found: {reference_key}")
+        
+        document = self.__extract_text(target_key)
+        reference = self.__extract_text(reference_key)
 
+        prompt = self.prompt_builder.build_doc_consistency_check_prompt(document, reference)
 
-        for i in range(0, len(checklist_late_tail), self.CHECKLIST_CHUNK_SIZE):
-            res = self.__assistant_check_result_checklist_only(document, checklist_late_tail[i:i+self.CHECKLIST_CHUNK_SIZE])
-            result.checklist.extend([
-                ChecklistItem(
-                    id=item["id"],
-                    result=item["res"],
-                    quotes=item["qot"],
-                    references=item["ref"],
+        res = self.__assistant_check_result(prompt, generation_ai_schema.DOC_CONSISTENCY_CHECK)
+
+        return CheckDocumentConsistencyResult(
+            result=[
+                ConsistencyResultItem(
+                    quote=item["qot"],
                     comment=item["cmt"],
                 )
-                for item in res["checklist"]
-            ])
-
-        return result
-    
-    def __assistant_check_result(self, document:str, checklist, summary_policy:str):
-        policy = json.dumps(
-            {"summary": summary_policy},
-            ensure_ascii=False,
+                for item in res
+            ],
         )
-        checklist_str = json.dumps(checklist, ensure_ascii=False)
-        prompt = self.prompt_builder.build_doc_check_prompt(document, checklist_str, policy)
-        assistant_text = self.ASSISTANT_TEXT_PREFIX
-        assistant_text = assistant_text + self.generation_ai_client.generate_message(
-            prompt, assistant_text, max_tokens=8192, top_p=0.1
-        )
-        assistant_text = assistant_text[
-            : assistant_text.rfind(self.ASSISTANT_TEXT_SUFFIX) + 1
-        ]
-        result = json.loads(assistant_text)
-        validate(event=result, schema=generation_ai_doc_check_schema.ASSISTANT)
-
-        return result
-
-    def __assistant_check_result_checklist_only(self, document:str, checklist):
-        checklist_str = json.dumps(checklist, ensure_ascii=False)
-        prompt = self.prompt_builder.build_doc_check_prompt(document, checklist_str, section="DOC_CHECK_CHECKLIST_ONLY")
-        assistant_text = self.ASSISTANT_TEXT_PREFIX
-        assistant_text = assistant_text + self.generation_ai_client.generate_message(
-            prompt, assistant_text, max_tokens=8192, top_p=0.1
-        )
-        assistant_text = assistant_text[
-            : assistant_text.rfind(self.ASSISTANT_TEXT_SUFFIX) + 1
-        ]
-        result = json.loads(assistant_text)
-        validate(event=result, schema=generation_ai_doc_check_schema.ASSISTANT_CHECKLIST_ONLY)
-
-        return result
-
 
     @result_handler
-    def start_check_job(self, json_body):
-        validate(event=json_body, schema=check_document_schema.INPUT)
+    def check_checklist(self, json_body):
+        validate(event=json_body, schema=check_document_checklist_schema.INPUT)
         target_key = json_body["target_key"]
-        if not self.storage_client.exists(self.S3_CHECK_TARGET_BUCKET_NAME, target_key):
+        if not self.storage_client.exists(self.S3_DOCUMENT_BUCKET_NAME, target_key):
             raise Exception(f"File not found: {target_key}")
+        
+        document = self.__extract_text(target_key)
+        checklist = json_body["checklist"]
+        
+        if json_body.get("reference_key"):
+            reference_key = json_body["reference_key"]
+            if not self.storage_client.exists(self.S3_DOCUMENT_BUCKET_NAME, reference_key):
+                raise Exception(f"File not found: {reference_key}")
+            reference = self.__extract_text(reference_key)
+            prompt = self.prompt_builder.build_doc_checklist_check_with_reference_prompt(
+                document, json.dumps(checklist, ensure_ascii=False), reference
+            )
+        else:
+            prompt = self.prompt_builder.build_doc_checklist_check_prompt(
+                document, json.dumps(checklist, ensure_ascii=False)
+            )
+        
+        res = self.__assistant_check_result(prompt, generation_ai_schema.DOC_CHECKLIST_CHECK)
+
+        return CheckDocumentChecklistResult(
+            result=[
+                ChecklistResultItem(
+                    id=item["id"],
+                    quote=item["qot"],
+                    comment=item["cmt"],
+                )
+                for item in res
+            ],
+        )                
+
+    def __assistant_check_result(self, prompt, result_schema):
+        assistant_text = self.ASSISTANT_TEXT_PREFIX
+        assistant_text = assistant_text + self.generation_ai_client.generate_message(
+            prompt, assistant_text, max_tokens=8192, top_p=0.1
+        )
+        assistant_text = assistant_text[
+            : assistant_text.rfind(self.ASSISTANT_TEXT_SUFFIX) + 1
+        ]
+        result = json.loads(assistant_text)
+        validate(event=result, schema=result_schema)
+        return result
+
+    @result_handler
+    def start_checklist_check_job(self, json_body):
+        validate(event=json_body, schema=check_document_checklist_schema.INPUT)
+        target_key = json_body["target_key"]
+        if not self.storage_client.exists(self.S3_DOCUMENT_BUCKET_NAME, target_key):
+            raise Exception(f"File not found: {target_key}")
+        if json_body.get("reference_key"):
+            reference_key = json_body["reference_key"]
+            if not self.storage_client.exists(self.S3_DOCUMENT_BUCKET_NAME, reference_key):
+                raise Exception(f"File not found: {reference_key}")
+        return self.__start_check_job(json_body, DocCheckType.CHECKLIST)
+    
+    @result_handler
+    def start_consistency_check_job(self, json_body):
+        validate(event=json_body, schema=check_document_consistency_schema.INPUT)
+        target_key = json_body["target_key"]
+        if not self.storage_client.exists(self.S3_DOCUMENT_BUCKET_NAME, target_key):
+            raise Exception(f"File not found: {target_key}")
+        reference_key = json_body["reference_key"]
+        if not self.storage_client.exists(self.S3_DOCUMENT_BUCKET_NAME, reference_key):
+            raise Exception(f"File not found: {reference_key}")
+        return self.__start_check_job(json_body, DocCheckType.CONSISTENCY)
+    
+    @result_handler
+    def start_typo_check_job(self, json_body):
+        validate(event=json_body, schema=check_document_typo_schema.INPUT)
+        target_key = json_body["target_key"]
+        if not self.storage_client.exists(self.S3_DOCUMENT_BUCKET_NAME, target_key):
+            raise Exception(f"File not found: {target_key}")
+        return self.__start_check_job(json_body, DocCheckType.TYPO)
+        
+
+    def __start_check_job(self, json_body, check_type):
+        message_body = DocCheckQueueMessageBody(
+            check_type=check_type.value, payload=json_body
+        )
+
         send_message_result = self.queueing_client.send_message(
-            self.SQS_DOC_CHECK_QUEUE_NAME, json.dumps(json_body)
+            self.SQS_DOC_CHECK_QUEUE_NAME, json.dumps(asdict(message_body))
         )
 
         job_id = send_message_result.get("MessageId", "")
@@ -152,7 +205,7 @@ class DocumentService:
             job.save()
 
         return StartDocCheckJobResult(job_id=job_id)
-
+    
     @result_handler
     def confirm_check_job(self, query_params):
         job_id = query_params["job_id"]
@@ -161,29 +214,9 @@ class DocumentService:
             raise Exception(f"Job not found: {job_id}")
         if job.status == JobStatus.COMPLETED.value:
             payload_json = json.loads(job.payload)
-            check_document_result = CheckDocumentResult(
-                checklist=[
-                    ChecklistItem(
-                        id=item["id"],
-                        result=item["result"],
-                        quotes=item["quotes"],
-                        references=item["references"],
-                        comment=item["comment"],
-                    )
-                    for item in payload_json["checklist"]
-                ],
-                typos=[
-                    TyposItem(
-                        original=item["original"],
-                        corrected=item["corrected"],
-                    )
-                    for item in payload_json["typos"]
-                ],
-                summary=payload_json["summary"],
-            )
             job.delete()
             return ConfirmDocCheckJobResult(
-                status=job.status, payload=check_document_result
+                status=job.status, payload=payload_json
             )
         elif job.status == JobStatus.FAILED.value:
             job.delete()
@@ -197,7 +230,14 @@ class DocumentService:
         job.save()
 
         try:
-            check_document_result = self.check(json_body)
+            if json_body["check_type"] == DocCheckType.CHECKLIST.value:
+                check_document_result = self.check_checklist(json_body["payload"])
+            elif json_body["check_type"] == DocCheckType.CONSISTENCY.value:
+                check_document_result = self.check_consistency(json_body["payload"])
+            elif json_body["check_type"] == DocCheckType.TYPO.value:
+                check_document_result = self.check_typo(json_body["payload"])
+            else:
+                raise Exception(f"Unsupported check type: {json_body['check_type']}")
             job.payload = json.dumps(check_document_result.body, ensure_ascii=False)
             print(job.payload)
             job.status = JobStatus.COMPLETED.value
@@ -218,7 +258,7 @@ class DocumentService:
 
     def __extract_text_from_pdf(self, target_key):
         pdf_obj = self.storage_client.get_object(
-            bucket=self.S3_CHECK_TARGET_BUCKET_NAME, key=target_key
+            bucket=self.S3_DOCUMENT_BUCKET_NAME, key=target_key
         )
         pdf = pypdfium2.PdfDocument(BytesIO(pdf_obj))
         text = ""
@@ -231,7 +271,7 @@ class DocumentService:
     def __extract_text_from_word(self, target_key):
 
         doc_obj = self.storage_client.get_object(
-            bucket=self.S3_CHECK_TARGET_BUCKET_NAME, key=target_key
+            bucket=self.S3_DOCUMENT_BUCKET_NAME, key=target_key
         )
         doc = docx.Document(BytesIO(doc_obj))
         full_text = ""

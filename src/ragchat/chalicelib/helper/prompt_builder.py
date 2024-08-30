@@ -6,7 +6,7 @@ from dataclasses import asdict
 from configparser import ConfigParser
 from typing import List
 from chalicelib.dataclasses.information_fragment import InformationFragment
-from chalicelib.schemas import generation_ai_doc_check_schema
+from chalicelib.schemas import generation_ai_schema
 
 
 class PromptBuilder:
@@ -45,7 +45,7 @@ class PromptBuilder:
         config = self.config[section]
         prompt_format = config.get("Format", "")
         schema = json.dumps(
-            generation_ai_doc_check_schema.ASSISTANT, ensure_ascii=False
+            generation_ai_schema.ASSISTANT, ensure_ascii=False
         )
 
         return self.__fill_in_xml(
@@ -54,6 +54,82 @@ class PromptBuilder:
             checklist=checklist,
             schema=schema,
             policy=policy,
+        )
+    
+    def build_doc_typo_check_prompt(
+            self,
+            document: str,
+            section: str = "DOC_TYPO_CHECK",
+    ) -> str:
+        config = self.config[section]
+        prompt_format = config.get("Format", "")
+        schema = json.dumps(
+            generation_ai_schema.DOC_TYPO_CHECK, ensure_ascii=False
+        )
+
+        return self.__fill_in_xml(
+            prompt_format,
+            document=document,
+            schema=schema,
+        )
+    
+    def build_doc_checklist_check_prompt(
+            self,
+            document: str,
+            checklist: str,
+            section: str = "DOC_CHECKLIST_CHECK",
+    ) -> str:
+        config = self.config[section]
+        prompt_format = config.get("Format", "")
+        schema = json.dumps(
+            generation_ai_schema.DOC_CHECKLIST_CHECK, ensure_ascii=False
+        )
+
+        return self.__fill_in_xml(
+            prompt_format,
+            document=document,
+            checklist=checklist,
+            schema=schema,
+        )
+    
+    def build_doc_checklist_check_with_reference_prompt(
+            self,
+            document: str,
+            checklist: str,
+            reference: str,
+            section: str = "DOC_CHECKLIST_CHECK_WITH_REFERENCE",
+    ) -> str:
+        config = self.config[section]
+        prompt_format = config.get("Format", "")
+        schema = json.dumps(
+            generation_ai_schema.DOC_CHECKLIST_CHECK, ensure_ascii=False
+        )
+
+        return self.__fill_in_xml(
+            prompt_format,
+            document=document,
+            checklist=checklist,
+            reference=reference,
+            schema=schema,
+        )
+
+    def build_doc_consistency_check_prompt(
+            self,
+            document: str,
+            reference: str,
+            section: str = "DOC_CONSISTENCY_CHECK",
+    ) -> str:
+        config = self.config[section]
+        prompt_format = config.get("Format", "")
+        schema = json.dumps(
+            generation_ai_schema.DOC_CONSISTENCY_CHECK, ensure_ascii=False
+        )
+
+        return self.__fill_in_xml(
+            prompt_format,
+            document=document,
+            reference=reference,
+            schema=schema,
         )
 
     def __fill_in_xml(self, prompt_format, **kwargs):

@@ -12,7 +12,7 @@
         "BEDROCK_EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
         "S3_SOURCE_BUCKET_NAME": "ragchat-source-bucket",
         "S3_DESTINATION_BUCKET_NAME": "ragchat-destination-bucket",
-        "S3_CHECK_TARGET_BUCKET_NAME": "ragchat-document-bucket",
+        "S3_DOCUMENT_BUCKET_NAME": "ragchat-document-bucket",
         "SQS_DOC_CHECK_QUEUE_NAME": "ragchat-doc-check-queue",
         "DYNAMODB_JOB_TABLE_NAME": "ragchat-job-table"
       }
@@ -30,7 +30,7 @@
         "BEDROCK_EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
         "S3_SOURCE_BUCKET_NAME": "ragchat-source-bucket",
         "S3_DESTINATION_BUCKET_NAME": "ragchat-destination-bucket",
-        "S3_CHECK_TARGET_BUCKET_NAME": "ragchat-document-bucket",
+        "S3_DOCUMENT_BUCKET_NAME": "ragchat-document-bucket",
         "SQS_DOC_CHECK_QUEUE_NAME": "ragchat-doc-check-queue",
         "DYNAMODB_JOB_TABLE_NAME": "ragchat-job-table"
       },
@@ -58,7 +58,7 @@
         "BEDROCK_EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
         "S3_SOURCE_BUCKET_NAME": "raglab-source-bucket",
         "S3_DESTINATION_BUCKET_NAME": "raglab-destination-bucket",
-        "S3_CHECK_TARGET_BUCKET_NAME": "raglab-document-bucket",
+        "S3_DOCUMENT_BUCKET_NAME": "raglab-document-bucket",
         "SQS_DOC_CHECK_QUEUE_NAME": "raglab-doc-check-queue",
         "DYNAMODB_JOB_TABLE_NAME": "raglab-job-table"
       },
