@@ -6,6 +6,7 @@ from chalicelib.dataclasses.check_document_result import CheckDocumentResult
 @dataclass
 class ChecklistResultItem:
     id: str
+    result: str
     quote: str
     comment: str
 

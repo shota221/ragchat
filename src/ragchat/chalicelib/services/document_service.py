@@ -138,6 +138,7 @@ class DocumentService:
             result=[
                 ChecklistResultItem(
                     id=item["id"],
+                    result=item["res"],
                     quote=item["qot"],
                     comment=item["cmt"],
                 )

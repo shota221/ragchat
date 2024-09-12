@@ -28,7 +28,11 @@ DOC_CHECKLIST_CHECK = {
         "properties": {
             "id": {
                 "type": "string",
-                "description": "チェック項目のうち、回答がNoであるチェック項目のIDを記入してください。このIDは、与えられたチェックリストのIDと一致している必要があります。",
+                "description": "チェック項目のIDを記入してください。このIDは、与えられたチェックリストのIDと一致している必要があります。",
+            },
+            "res": {
+                "type": "string",
+                "description": "チェック項目に対して回答してください。回答がYesの場合は'Y'、Noもしくはどちらとも言えない場合は'N'を記入してください。",
             },
             "qot": {
                 "type": "string",
@@ -39,8 +43,8 @@ DOC_CHECKLIST_CHECK = {
                 "description": "チェック項目に関するコメントを記入してください。",
             },
         },
-        "required": ["id", "qot", "cmt"],
-        "description": "チェックリスト内のチェック項目のうち、回答がNoであるチェック項目に関する情報を列挙してください。回答がYesのチェック項目に関する情報は無視してください。",
+        "required": ["id", "res", "qot", "cmt"],
+        "description": "チェックリスト内のチェック項目に関する回答をそれぞれ記入してください。",
     },
 }
 

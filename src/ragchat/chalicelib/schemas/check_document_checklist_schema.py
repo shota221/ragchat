@@ -33,9 +33,13 @@ OUTPUT = {
             "type": "array",
             "items": {
                 "type": "object",
-                "required": ["id", "quotes", "comment"],
+                "required": ["id", "result", "quote", "comment"],
                 "properties": {
-                    "id": {"type": "string", "description": "回答がNoであるチェック項目のID"},
+                    "id": {"type": "string", "description": "チェック項目のID"},
+                    "result": {
+                        "type": "string",
+                        "description": "回答がYesである場合は'Y'、Noもしくはどちらとも言えない場合は'N'",
+                    },
                     "quote": {
                         "type": "string",
                         "description": "チェック項目に関連するドキュメントからの引用",
